@@ -65,12 +65,14 @@ const LoginPage = () => {
             flexDirection: 'column',
             alignItems: 'center',
             width: '100%',
+            backgroundColor: '#ffebee',
+            border: '1px solid #e57373',
           }}
         >
-          <Typography component="h1" variant="h4" gutterBottom>
+          <Typography component="h1" variant="h4" gutterBottom sx={{ color: '#c62828' }}>
             A-Z Plan
           </Typography>
-          <Typography component="h2" variant="h5" gutterBottom>
+          <Typography component="h2" variant="h5" gutterBottom sx={{ color: '#d32f2f' }}>
             Sign In
           </Typography>
           

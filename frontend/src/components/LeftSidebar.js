@@ -99,6 +99,8 @@ const LeftSidebar = () => {
         maxWidth: isCollapsed ? 60 : 320,
         transition: 'width 0.3s ease-in-out',
         position: 'relative',
+        backgroundColor: '#ffcdd2',
+        border: '1px solid #e57373',
       }}
     >
       {/* Collapse/Expand Button */}

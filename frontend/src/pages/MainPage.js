@@ -21,7 +21,7 @@ const MainPage = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ display: 'flex', height: '100vh', bgcolor: '#ffebee' }}>
       {/* Left Sidebar - User info, current info, reference info */}
       <LeftSidebar />
       

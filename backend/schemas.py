@@ -53,6 +53,30 @@ class Task(TaskBase):
     class Config:
         from_attributes = True
 
+# Project schemas
+class ProjectBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+
+class ProjectCreate(ProjectBase):
+    pass
+
+class ProjectUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+
+class Project(ProjectBase):
+    id: int
+    owner_id: int
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class ProjectWithPlans(Project):
+    plans: List['Plan'] = []
+
 # Plan schemas
 class PlanBase(BaseModel):
     plan_letter: str
@@ -72,7 +96,7 @@ class PlanUpdate(BaseModel):
 
 class Plan(PlanBase):
     id: int
-    owner_id: int
+    project_id: int
     created_at: datetime
     updated_at: datetime
     tasks: List[Task] = []
@@ -163,3 +187,6 @@ class LLMGenerationRequest(BaseModel):
 
 class LLMGenerationResponse(BaseModel):
     generated_plans: List[PlanCreate]
+
+# Forward reference resolution
+ProjectWithPlans.model_rebuild()

@@ -1,34 +1,38 @@
 import React, { useState } from 'react';
-import { Box } from '@mui/material';
+import { 
+  Box, 
+  Typography 
+} from '@mui/material';
 import LeftSidebar from '../components/LeftSidebar';
-import PlanList from '../components/PlanList';
+import ProjectList from '../components/PlanList'; 
 import AZPlanDetail from '../components/AZPlanDetail';
 import MinimizedSidebar from '../components/MinimizedSidebar';
 
 const MainPage = () => {
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  // Main page component for Project-Plan hierarchy
+  const [selectedProject, setSelectedProject] = useState(null);
 
-  const handlePlanSelect = (plan) => {
-    setSelectedPlan(plan);
+  const handleProjectSelect = (project) => {
+    setSelectedProject(project);
   };
 
   const handleCommentAdded = () => {
     // This could trigger a refresh or update if needed
   };
 
-  const handlePlanUpdate = () => {
-    // Refresh or update plans when needed
+  const handleProjectUpdate = () => {
+    // Refresh or update projects when needed
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', bgcolor: '#ffebee' }}>
+    <Box sx={{ display: 'flex', height: '100vh', bgcolor: 'background.default' }}>
       {/* Left Sidebar - User info, current info, reference info */}
       <LeftSidebar />
       
-      {/* Plan List - Shows available plans */}
-      <PlanList 
-        selectedPlan={selectedPlan}
-        onPlanSelect={handlePlanSelect}
+      {/* Project List - Shows available plans under Project structure */}
+      <ProjectList 
+        selectedPlan={selectedProject}
+        onPlanSelect={handleProjectSelect}
       />
       
       {/* Main Content - A-Z Plan Details */}
@@ -38,10 +42,10 @@ const MainPage = () => {
         flexDirection: 'column',
         overflow: 'hidden'
       }}>
-        {selectedPlan ? (
+        {selectedProject ? (
           <AZPlanDetail 
-            plan={selectedPlan}
-            onPlanUpdate={handlePlanUpdate}
+            plan={selectedProject}
+            onPlanUpdate={handleProjectUpdate}
           />
         ) : (
           <Box
@@ -56,12 +60,12 @@ const MainPage = () => {
           >
             <Box sx={{ textAlign: 'center' }}>
               <Box sx={{ fontSize: '4rem', mb: 2 }}>🎯</Box>
-              <Box variant="h5" component="div" gutterBottom>
-                Select a Plan to Get Started
-              </Box>
-              <Box variant="body2">
-                Choose a plan from the list to view and manage your A-Z sections
-              </Box>
+              <Typography variant="h5" component="div" gutterBottom>
+                Select a Project to Get Started
+              </Typography>
+              <Typography variant="body2">
+                Choose a project from the list to view and manage your A-Z plans
+              </Typography>
             </Box>
           </Box>
         )}
@@ -69,7 +73,7 @@ const MainPage = () => {
       
       {/* Right Sidebar - Minimized Statistics and comments */}
       <MinimizedSidebar 
-        selectedPlan={selectedPlan}
+        selectedPlan={selectedProject}
         onCommentAdded={handleCommentAdded}
       />
     </Box>

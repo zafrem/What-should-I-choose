@@ -8,9 +8,10 @@ import secrets
 import uuid
 
 from database import SessionLocal, engine, get_db
-from models import Base, User as UserModel, Plan as PlanModel, Task as TaskModel, Comment as CommentModel, APIToken as APITokenModel, SharedLink as SharedLinkModel
+from models import Base, User as UserModel, Project as ProjectModel, Plan as PlanModel, Task as TaskModel, Comment as CommentModel, APIToken as APITokenModel, SharedLink as SharedLinkModel
 from schemas import (
-    User, UserCreate, UserLogin, Plan, PlanCreate, PlanUpdate, PlanWithStats,
+    User, UserCreate, UserLogin, Project, ProjectCreate, ProjectUpdate, ProjectWithPlans,
+    Plan, PlanCreate, PlanUpdate, PlanWithStats,
     Task, TaskCreate, TaskUpdate, Comment, CommentCreate, APIToken, APITokenCreate,
     SharedLink, SharedLinkCreate, Token, TokenData, PlanStatistics,
     LLMGenerationRequest, LLMGenerationResponse
@@ -20,11 +21,16 @@ from auth import (
     get_password_hash, ACCESS_TOKEN_EXPIRE_MINUTES
 )
 from ollama_service import ollama_service
+from routers import projects, plans
 
 # Create tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="A-Z Plan API", version="1.0.0")
+
+# Include routers
+app.include_router(projects.router)
+app.include_router(plans.router)
 
 # CORS middleware
 app.add_middleware(

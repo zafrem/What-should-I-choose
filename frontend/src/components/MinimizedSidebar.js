@@ -57,15 +57,11 @@ const MinimizedSidebar = ({ selectedPlan, onCommentAdded }) => {
   };
 
   const loadComments = async () => {
-    if (!selectedPlan || selectedPlan.id === 'az-plan') return;
+    if (!selectedPlan) return;
     
     try {
-      // For now, we'll show comments from the first section
-      const firstSection = selectedPlan.sections?.[0];
-      if (firstSection) {
-        const response = await commentsAPI.getAll(firstSection.id);
-        setComments(response.data);
-      }
+      const response = await commentsAPI.getAll(selectedPlan.id);
+      setComments(response.data);
     } catch (error) {
       console.error('Failed to load comments:', error);
     }
@@ -235,7 +231,7 @@ const MinimizedSidebar = ({ selectedPlan, onCommentAdded }) => {
         </AccordionSummary>
         
         <AccordionDetails sx={{ flex: 1, display: 'flex', flexDirection: 'column', pt: 0 }}>
-          {selectedPlan && selectedPlan.id !== 'az-plan' ? (
+          {selectedPlan ? (
             <>
               {/* Add Comment */}
               <Box sx={{ mb: 2 }}>

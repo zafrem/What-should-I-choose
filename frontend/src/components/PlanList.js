@@ -17,20 +17,27 @@ import {
   TextField,
   Alert,
   Chip,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Collapse,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   Assignment as PlanIcon,
+  ExpandMore as ExpandMoreIcon,
+  Work as ProjectIcon,
 } from '@mui/icons-material';
-import { plansAPI } from '../services/api';
+import { projectsAPI, plansAPI } from '../services/api';
 
-const PlanList = ({ onPlanSelect, selectedPlan }) => {
-  const [plans, setPlans] = useState([]);
+const ProjectList = ({ onPlanSelect, selectedPlan }) => {
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [expandedSections, setExpandedSections] = useState(['project']); // Project section expanded by default
   
   // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -38,141 +45,104 @@ const PlanList = ({ onPlanSelect, selectedPlan }) => {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   
   // Form states
-  const [newPlan, setNewPlan] = useState({
+  const [newProject, setNewProject] = useState({
     title: '',
     description: '',
   });
-  const [editingPlan, setEditingPlan] = useState(null);
-  const [deletingPlan, setDeletingPlan] = useState(null);
+  const [editingProject, setEditingProject] = useState(null);
+  const [deletingProject, setDeletingProject] = useState(null);
 
   useEffect(() => {
-    loadPlans();
+    loadProjects();
   }, []);
 
-  const loadPlans = async () => {
+  const handleSectionToggle = (section) => {
+    setExpandedSections(prev => 
+      prev.includes(section) 
+        ? prev.filter(s => s !== section)
+        : [...prev, section]
+    );
+  };
+
+  const loadProjects = async () => {
     try {
       setLoading(true);
-      const response = await plansAPI.getAll();
-      // Group all A-Z plans into a single plan structure
-      const azPlan = {
-        id: 'az-plan',
-        title: 'A-Z Plan',
-        description: 'Complete planning from start to finish',
-        sections: response.data.sort((a, b) => a.plan_letter.localeCompare(b.plan_letter))
-      };
-      setPlans([azPlan]);
+      const response = await projectsAPI.getAll();
+      setProjects(response.data.sort((a, b) => a.id - b.id));
       setError('');
     } catch (error) {
-      setError('Failed to load plans');
+      console.error('Failed to load projects:', error);
+      setError('Failed to load projects');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreatePlan = async () => {
+  const handleCreateProject = async () => {
     try {
-      const planData = {
-        plan_letter: 'A', // Default to A for now, we'll manage this differently
-        title: newPlan.title,
-        description: newPlan.description,
+      const projectData = {
+        title: newProject.title,
+        description: newProject.description,
       };
       
-      await plansAPI.create(planData);
-      setSuccess('Plan created successfully');
+      const response = await projectsAPI.create(projectData);
+      setSuccess(`Project "${response.data.title}" created successfully`);
       setCreateDialogOpen(false);
-      setNewPlan({ title: '', description: '' });
-      loadPlans();
+      setNewProject({ title: '', description: '' });
+      loadProjects();
     } catch (error) {
-      setError('Failed to create plan');
+      setError('Failed to create project');
     }
   };
 
-  const openEditPlan = (plan) => {
-    setEditingPlan({ ...plan });
+  const openEditProject = (project) => {
+    setEditingProject({ ...project });
     setEditDialogOpen(true);
   };
 
-  const openDeletePlan = (plan) => {
-    setDeletingPlan(plan);
+  const openDeleteProject = (project) => {
+    setDeletingProject(project);
     setConfirmDeleteOpen(true);
   };
 
-  const handleEditPlan = async () => {
+  const handleEditProject = async () => {
     try {
-      if (editingPlan.id === 'az-plan') {
-        // For A-Z plan, update the title and description directly
-        // This is a virtual plan, so we don't need to make API calls
-        setSuccess('Plan title and description updated successfully');
-      } else {
-        // For individual plans, update via API
-        const updateData = {
-          title: editingPlan.title,
-          description: editingPlan.description,
-        };
-        
-        const firstSection = editingPlan.sections?.[0];
-        if (firstSection) {
-          await plansAPI.update(firstSection.id, updateData);
-          setSuccess('Plan updated successfully');
-        }
-      }
+      const updateData = {
+        title: editingProject.title,
+        description: editingProject.description,
+      };
+      
+      await projectsAPI.update(editingProject.id, updateData);
+      setSuccess(`Project "${editingProject.title}" updated successfully`);
       
       setEditDialogOpen(false);
-      setEditingPlan(null);
-      loadPlans();
+      setEditingProject(null);
+      loadProjects();
     } catch (error) {
-      setError('Failed to update plan');
+      setError('Failed to update project');
     }
   };
 
-  const handleDeletePlan = async () => {
+  const handleDeleteProject = async () => {
     try {
-      if (deletingPlan.id === 'az-plan') {
-        // Delete all sections in the A-Z plan
-        for (const section of deletingPlan.sections || []) {
-          await plansAPI.delete(section.id);
-        }
-        setSuccess('All A-Z Plan sections deleted successfully');
-      } else {
-        // Delete individual plan sections
-        for (const section of deletingPlan.sections || []) {
-          await plansAPI.delete(section.id);
-        }
-        setSuccess('Plan deleted successfully');
-      }
-      
+      await projectsAPI.delete(deletingProject.id);
+      setSuccess(`Project "${deletingProject.title}" deleted successfully`);
       setConfirmDeleteOpen(false);
-      setDeletingPlan(null);
-      loadPlans();
+      setDeletingProject(null);
+      loadProjects();
     } catch (error) {
-      setError('Failed to delete plan');
+      setError('Failed to delete project');
+      setConfirmDeleteOpen(false);
+      setDeletingProject(null);
     }
   };
 
-  const getPlanStatusColor = (plan) => {
-    if (!plan.sections || plan.sections.length === 0) return 'default';
-    
-    const completedSections = plan.sections.filter(section => 
-      section.tasks && section.tasks.every(task => task.is_completed)
-    ).length;
-    
-    const totalSections = plan.sections.length;
-    const completionRate = completedSections / totalSections;
-    
-    if (completionRate === 1) return 'success';
-    if (completionRate > 0.7) return 'info';
-    if (completionRate > 0.3) return 'warning';
-    return 'default';
+  const getProjectStatusColor = () => {
+    return 'primary';
   };
 
-  const getPlanStatusText = (plan) => {
-    if (!plan.sections || plan.sections.length === 0) return 'Empty';
-    
-    const completedSections = plan.sections.filter(section => 
-      section.tasks && section.tasks.every(task => task.is_completed)
-    ).length;
-    
-    return `${completedSections}/${plan.sections.length} sections completed`;
+  const getProjectStatusText = (project) => {
+    return `${new Date(project.created_at).toLocaleDateString()}`;
   };
 
   return (
@@ -189,89 +159,156 @@ const PlanList = ({ onPlanSelect, selectedPlan }) => {
       }}
     >
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">Plan List</Typography>
+        <Typography variant="h6">Project Management</Typography>
         <Button
           size="small"
           startIcon={<AddIcon />}
           onClick={() => setCreateDialogOpen(true)}
           variant="outlined"
         >
-          New Plan
+          New Project
         </Button>
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 
-      <List sx={{ flex: 1, overflow: 'auto' }}>
-        {plans.map((plan) => (
-          <ListItem
-            key={plan.id}
-            disablePadding
-            secondaryAction={
-              <Box>
-                <IconButton size="small" onClick={() => openEditPlan(plan)}>
-                  <EditIcon />
-                </IconButton>
-                <IconButton size="small" onClick={() => openDeletePlan(plan)} color="error">
-                  <DeleteIcon />
-                </IconButton>
-              </Box>
-            }
-          >
-            <ListItemButton
-              selected={selectedPlan?.id === plan.id}
-              onClick={() => onPlanSelect(plan)}
-            >
-              <ListItemIcon>
-                <PlanIcon color="primary" />
-              </ListItemIcon>
-              <ListItemText
-                primary={plan.title}
-                secondary={
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      {plan.description?.substring(0, 50)}
-                      {plan.description?.length > 50 ? '...' : ''}
-                    </Typography>
-                    <Box sx={{ mt: 0.5 }}>
-                      <Chip
-                        label={getPlanStatusText(plan)}
-                        color={getPlanStatusColor(plan)}
-                        size="small"
-                      />
-                    </Box>
-                  </Box>
-                }
+      {/* Project Section with A-Z Plans */}
+      <Box sx={{ flex: 1, overflow: 'auto' }}>
+        <Accordion 
+          expanded={expandedSections.includes('project')}
+          onChange={() => handleSectionToggle('project')}
+          sx={{ mb: 1 }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <ProjectIcon color="primary" />
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Project
+              </Typography>
+              <Chip 
+                label={`${projects.length} projects`} 
+                size="small" 
+                color="primary" 
+                variant="outlined" 
               />
-            </ListItemButton>
-          </ListItem>
-        ))}
-        
-        {plans.length === 0 && !loading && (
-          <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ py: 4 }}>
-            No plans created yet. Create your first A-Z plan!
-          </Typography>
-        )}
-      </List>
+            </Box>
+          </AccordionSummary>
+          
+          <AccordionDetails sx={{ pt: 0 }}>
+            <List dense>
+              {loading ? (
+                <ListItem>
+                  <ListItemText 
+                    primary="Loading projects..."
+                    primaryTypographyProps={{ 
+                      variant: 'body2', 
+                      color: 'text.secondary',
+                      align: 'center'
+                    }}
+                  />
+                </ListItem>
+              ) : projects.length === 0 ? (
+                <ListItem>
+                  <ListItemText 
+                    primary="No projects created yet. Create your first project with A-Z plans!"
+                    primaryTypographyProps={{ 
+                      variant: 'body2', 
+                      color: 'text.secondary',
+                      align: 'center'
+                    }}
+                  />
+                </ListItem>
+              ) : (
+                projects.map((project) => (
+                  <ListItem
+                    key={project.id}
+                    disablePadding
+                    secondaryAction={
+                      <Box>
+                        <IconButton size="small" onClick={() => openEditProject(project)}>
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton size="small" onClick={() => openDeleteProject(project)} color="error">
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                    }
+                  >
+                    <ListItemButton
+                      selected={selectedPlan?.id === project.id}
+                      onClick={() => onPlanSelect(project)}
+                      sx={{ py: 0.5 }}
+                    >
+                      <ListItemIcon sx={{ minWidth: 36 }}>
+                        <Box
+                          sx={{
+                            width: 24,
+                            height: 24,
+                            borderRadius: '50%',
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '12px',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          📁
+                        </Box>
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={`${project.title}`}
+                        secondary={
+                          <React.Fragment>
+                            <span>
+                              {project.description?.substring(0, 40)}
+                              {project.description?.length > 40 ? '...' : ''}
+                            </span>
+                            <br />
+                            <Chip
+                              label={getProjectStatusText(project)}
+                              color={getProjectStatusColor()}
+                              size="small"
+                              sx={{ mt: 0.5, height: 16, fontSize: '0.65rem' }}
+                            />
+                          </React.Fragment>
+                        }
+                        secondaryTypographyProps={{ component: 'div', variant: 'body2' }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                ))
+              )}
+            </List>
+          </AccordionDetails>
+        </Accordion>
+      </Box>
 
-      {/* Create Plan Dialog */}
-      <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Create New Plan</DialogTitle>
+      {/* Create Project Dialog */}
+      <Dialog 
+        open={createDialogOpen} 
+        onClose={() => setCreateDialogOpen(false)} 
+        maxWidth="sm" 
+        fullWidth
+        disableEnforceFocus
+      >
+        <DialogTitle>Create New Project</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
             label="Title"
-            value={newPlan.title}
-            onChange={(e) => setNewPlan({ ...newPlan, title: e.target.value })}
+            value={newProject.title}
+            onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
             margin="normal"
             required
           />
           <TextField
             fullWidth
             label="Description"
-            value={newPlan.description}
-            onChange={(e) => setNewPlan({ ...newPlan, description: e.target.value })}
+            value={newProject.description}
+            onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
             margin="normal"
             multiline
             rows={3}
@@ -279,29 +316,35 @@ const PlanList = ({ onPlanSelect, selectedPlan }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleCreatePlan} variant="contained">
-            Create Plan
+          <Button onClick={handleCreateProject} variant="contained">
+            Create Project
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Edit Plan Dialog */}
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Edit Plan</DialogTitle>
+      {/* Edit Project Dialog */}
+      <Dialog 
+        open={editDialogOpen} 
+        onClose={() => setEditDialogOpen(false)} 
+        maxWidth="sm" 
+        fullWidth
+        disableEnforceFocus
+      >
+        <DialogTitle>Edit Project</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
             label="Title"
-            value={editingPlan?.title || ''}
-            onChange={(e) => setEditingPlan({ ...editingPlan, title: e.target.value })}
+            value={editingProject?.title || ''}
+            onChange={(e) => setEditingProject({ ...editingProject, title: e.target.value })}
             margin="normal"
             required
           />
           <TextField
             fullWidth
             label="Description"
-            value={editingPlan?.description || ''}
-            onChange={(e) => setEditingPlan({ ...editingPlan, description: e.target.value })}
+            value={editingProject?.description || ''}
+            onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
             margin="normal"
             multiline
             rows={3}
@@ -309,27 +352,31 @@ const PlanList = ({ onPlanSelect, selectedPlan }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleEditPlan} variant="contained">
-            Update Plan
+          <Button onClick={handleEditProject} variant="contained">
+            Update Project
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Delete Plan Confirmation Dialog */}
-      <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>
-        <DialogTitle>Delete Plan</DialogTitle>
+      {/* Delete Project Confirmation Dialog */}
+      <Dialog 
+        open={confirmDeleteOpen} 
+        onClose={() => setConfirmDeleteOpen(false)}
+        disableEnforceFocus
+      >
+        <DialogTitle>Delete Project</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete "{deletingPlan?.title}"?
+            Are you sure you want to delete Project "{deletingProject?.title}"?
           </Typography>
           <Typography color="error" sx={{ mt: 1 }}>
-            This will delete all {deletingPlan?.sections?.length || 0} section(s) and their tasks. This action cannot be undone.
+            This will delete the project and all its plans. This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmDeleteOpen(false)}>Cancel</Button>
-          <Button onClick={handleDeletePlan} color="error" variant="contained">
-            Delete Plan
+          <Button onClick={handleDeleteProject} color="error" variant="contained">
+            Delete Project
           </Button>
         </DialogActions>
       </Dialog>
@@ -337,4 +384,4 @@ const PlanList = ({ onPlanSelect, selectedPlan }) => {
   );
 };
 
-export default PlanList;
+export default ProjectList;

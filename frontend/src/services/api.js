@@ -43,13 +43,22 @@ export const authAPI = {
   me: () => api.get('/auth/me'),
 };
 
-// Plans API
+// Projects API
+export const projectsAPI = {
+  getAll: () => api.get('/projects'),
+  get: (id) => api.get(`/projects/${id}`),
+  create: (projectData) => api.post('/projects', projectData),
+  update: (id, projectData) => api.put(`/projects/${id}`, projectData),
+  delete: (id) => api.delete(`/projects/${id}`),
+};
+
+// Plans API (nested under projects)
 export const plansAPI = {
-  getAll: () => api.get('/plans'),
-  get: (id) => api.get(`/plans/${id}`),
-  create: (planData) => api.post('/plans', planData),
-  update: (id, planData) => api.put(`/plans/${id}`, planData),
-  delete: (id) => api.delete(`/plans/${id}`),
+  getAll: (projectId) => api.get(`/projects/${projectId}/plans`),
+  get: (projectId, planId) => api.get(`/projects/${projectId}/plans/${planId}`),
+  create: (projectId, planData) => api.post(`/projects/${projectId}/plans`, planData),
+  update: (projectId, planId, planData) => api.put(`/projects/${projectId}/plans/${planId}`, planData),
+  delete: (projectId, planId) => api.delete(`/projects/${projectId}/plans/${planId}`),
   generateFromZ: () => api.post('/plans/generate-from-z'),
 };
 

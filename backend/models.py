@@ -14,25 +14,38 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
-    plans = relationship("Plan", back_populates="owner", cascade="all, delete-orphan")
+    projects = relationship("Project", back_populates="owner", cascade="all, delete-orphan")
     api_tokens = relationship("APIToken", back_populates="user", cascade="all, delete-orphan")
     comments = relationship("Comment", back_populates="user", cascade="all, delete-orphan")
     shared_links = relationship("SharedLink", back_populates="owner", cascade="all, delete-orphan")
+
+class Project(Base):
+    __tablename__ = "projects"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    description = Column(Text)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    owner = relationship("User", back_populates="projects")
+    plans = relationship("Plan", back_populates="project", cascade="all, delete-orphan")
 
 class Plan(Base):
     __tablename__ = "plans"
     
     id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     plan_letter = Column(String(1), nullable=False, index=True)  # A-Z
     title = Column(String, nullable=False)
     description = Column(Text)
     start_date = Column(DateTime(timezone=True))
     end_date = Column(DateTime(timezone=True))
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
-    owner = relationship("User", back_populates="plans")
+    project = relationship("Project", back_populates="plans")
     tasks = relationship("Task", back_populates="plan", cascade="all, delete-orphan")
     comments = relationship("Comment", back_populates="plan", cascade="all, delete-orphan")
 

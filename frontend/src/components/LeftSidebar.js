@@ -30,6 +30,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { apiTokensAPI } from '../services/api';
+import ThemeSelector from './ThemeSelector';
 
 const LeftSidebar = () => {
   const { user, logout } = useAuth();
@@ -99,8 +100,9 @@ const LeftSidebar = () => {
         maxWidth: isCollapsed ? 60 : 320,
         transition: 'width 0.3s ease-in-out',
         position: 'relative',
-        backgroundColor: '#ffcdd2',
-        border: '1px solid #e57373',
+        backgroundColor: 'background.default',
+        border: '1px solid',
+        borderColor: 'primary.light',
       }}
     >
       {/* Collapse/Expand Button */}
@@ -147,7 +149,8 @@ const LeftSidebar = () => {
         <Typography variant="body2" color="text.secondary" gutterBottom>
           {user?.email}
         </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <ThemeSelector />
           <Button
             size="small"
             startIcon={<SettingsIcon />}
@@ -246,6 +249,8 @@ const LeftSidebar = () => {
               {user?.username?.charAt(0)?.toUpperCase()}
             </Avatar>
           </Tooltip>
+          
+          <ThemeSelector />
           
           <Tooltip title="Settings" placement="right">
             <IconButton 

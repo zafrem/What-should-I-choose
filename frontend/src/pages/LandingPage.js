@@ -10,6 +10,14 @@ import {
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  
+  // Green theme colors (hardcoded to avoid theme errors)
+  const primaryMain = '#4caf50';
+  const primaryLight = '#81c784';
+  const primaryDark = '#388e3c';
+  const secondaryMain = '#66bb6a';
+  const secondaryLight = '#a5d6a7';
+  const backgroundDefault = '#e8f5e8';
 
   const handleSignIn = () => {
     navigate('/login');
@@ -23,12 +31,12 @@ const LandingPage = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #dc2626 0%, #ea580c 15%, #ca8a04 30%, #16a34a 45%, #0284c7 60%, #7c3aed 75%, #dc2626 100%)',
+        background: `linear-gradient(135deg, ${backgroundDefault} 0%, ${secondaryLight} 25%, ${secondaryMain} 50%, ${primaryLight} 75%, ${primaryMain} 100%)`,
         position: 'relative',
         overflow: 'hidden',
       }}
     >
-      {/* Subtle rainbow overlay */}
+      {/* Subtle green overlay */}
       <Box
         sx={{
           position: 'absolute',
@@ -36,7 +44,7 @@ const LandingPage = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'linear-gradient(45deg, rgba(220, 38, 38, 0.9) 0%, rgba(234, 88, 12, 0.8) 20%, rgba(202, 138, 4, 0.7) 40%, rgba(22, 163, 74, 0.7) 60%, rgba(2, 132, 199, 0.8) 80%, rgba(124, 58, 237, 0.9) 100%)',
+          background: `linear-gradient(45deg, ${primaryMain}10 0%, ${primaryLight}20 25%, ${secondaryLight}30 50%, ${secondaryMain}20 75%, ${primaryDark}10 100%)`,
           zIndex: 1,
         }}
       />
@@ -71,9 +79,9 @@ const LandingPage = () => {
             variant="contained"
             onClick={handleSignUp}
             sx={{
-              backgroundColor: 'rgba(220, 38, 38, 0.9)',
+              backgroundColor: primaryMain,
               '&:hover': {
-                backgroundColor: 'rgba(220, 38, 38, 1)',
+                backgroundColor: primaryDark,
               },
             }}
           >
@@ -96,12 +104,12 @@ const LandingPage = () => {
           textAlign: 'center',
         }}
       >
-        {/* Subtle rainbow element in center */}
+        {/* Subtle green element in center */}
         <Box
           sx={{
             width: 300,
             height: 150,
-            background: 'linear-gradient(90deg, rgba(220, 38, 38, 0.3) 0%, rgba(234, 88, 12, 0.3) 16.67%, rgba(202, 138, 4, 0.3) 33.33%, rgba(22, 163, 74, 0.3) 50%, rgba(2, 132, 199, 0.3) 66.67%, rgba(124, 58, 237, 0.3) 83.33%, rgba(220, 38, 38, 0.3) 100%)',
+            background: `linear-gradient(90deg, ${primaryMain}4D 0%, ${primaryLight}4D 25%, ${secondaryLight}4D 50%, ${secondaryMain}4D 75%, ${primaryDark}4D 100%)`,
             borderRadius: '50%',
             mb: 4,
             opacity: 0.6,
@@ -126,7 +134,7 @@ const LandingPage = () => {
             gutterBottom
             sx={{
               fontWeight: 'bold',
-              background: 'linear-gradient(45deg, #dc2626 30%, #ea580c 90%)',
+              background: `linear-gradient(45deg, ${primaryMain} 30%, ${primaryDark} 90%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               mb: 2,
@@ -164,12 +172,12 @@ const LandingPage = () => {
             size="large"
             onClick={handleSignIn}
             sx={{
-              backgroundColor: '#dc2626',
+              backgroundColor: primaryMain,
               py: 1.5,
               px: 4,
               fontSize: '1.1rem',
               '&:hover': {
-                backgroundColor: '#b91c1c',
+                backgroundColor: primaryDark,
               },
             }}
           >

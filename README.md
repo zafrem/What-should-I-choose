@@ -1,6 +1,6 @@
 # A-Z Plan Project
 
-A comprehensive planning application that helps you create structured plans from A to Z, with AI-powered generation and real-time collaboration features.
+A comprehensive project management application that helps you create projects with structured plans from A to Z, featuring AI-powered generation and real-time collaboration.
 
 ## Features
 
@@ -9,28 +9,31 @@ A comprehensive planning application that helps you create structured plans from
 - JWT-based authentication
 - API token generation for programmatic access
 
-### 📋 Plan Management
-- **Plan A**: Starting point (non-editable)
-- **Plans B-Y**: Intermediate steps (fully editable)
-- **Plan Z**: Ultimate goal (special plan for AI generation)
-- Task management with cost/revenue tracking
-- Drag-and-drop task ordering
+### 📂 Project & Plan Management
+- **Projects**: Create unlimited projects with custom titles and descriptions
+- **Plan Hierarchy**: Each project can contain Plans A-Z (26 plans maximum)
+  - **Plan A**: Most detailed and best form with low cost - your starting point
+  - **Plans B-Y**: Intermediate steps and variations (fully editable)
+  - **Plan Z**: Almost giving up option - your fallback plan
+- **Manual Plan Creation**: Add only the plans you need (A-Z as required)
+- **Task Management**: Add tasks to each plan with cost/revenue tracking
+- **Progress Tracking**: Visual indicators for plan and task completion
 
 ### 🤖 AI-Powered Generation
 - Auto-generate Plans B-Y from Plan Z using Ollama
-- Intelligent planning suggestions
+- Intelligent planning suggestions within each project
 - Fallback generation when LLM is unavailable
 
 ### 🤝 Collaboration Features
-- Real-time comments on plans
+- Real-time comments on plans within projects
 - Shareable links for external collaboration
 - User permissions and access control
 
 ### 📊 Analytics & Statistics
-- Plan completion tracking
-- Cost/revenue analysis
-- Duration statistics
-- Visual progress indicators
+- Project and plan completion tracking
+- Cost/revenue analysis per project
+- Project duration statistics
+- Visual progress indicators for plans and tasks
 
 ## Tech Stack
 
@@ -129,22 +132,26 @@ a-z-plan/
 ### 1. Getting Started
 
 1. Register a new account or login
-2. Create **Plan Z** first - this represents your ultimate goal
-3. Add detailed description to Plan Z for AI generation
-4. Create intermediate plans (B-Y) manually or use AI generation
+2. **Create a Project** - Give it a meaningful title and description
+3. **Add Plans** - Click "Create Plans" to add Plans A-Z as needed
+   - **Plan A**: Your detailed, best-case scenario
+   - **Plan Z**: Your fallback/worst-case option
+   - **Plans B-Y**: Intermediate variations
+4. Add detailed descriptions to plans for AI generation
 
 ### 2. AI Generation
 
-1. Write a comprehensive description in Plan Z
-2. Click "Generate B-Y" button in the main interface
-3. The system will create intermediate plans leading to your goal
+1. Within a project, write a comprehensive description in Plan Z
+2. Click "Generate B-Y from Z" button in the project interface
+3. The system will create intermediate plans (B-Y) leading from Plan Z
 4. Edit and customize the generated plans as needed
 
 ### 3. Task Management
 
-- Add tasks to each plan with cost/revenue tracking
+- Add tasks to each plan within your projects
+- Track costs and revenue for each task
 - Set task order and completion status
-- Track progress with visual indicators
+- Monitor progress with visual indicators
 - Add support targets for accountability
 
 ### 4. Collaboration
@@ -168,15 +175,22 @@ a-z-plan/
 - `POST /auth/login` - User login
 - `GET /auth/me` - Get current user
 
-### Plans
-- `GET /plans` - List all plans
-- `POST /plans` - Create new plan
-- `GET /plans/{id}` - Get plan details
-- `PUT /plans/{id}` - Update plan
-- `DELETE /plans/{id}` - Delete plan
+### Projects
+- `GET /projects` - List all projects
+- `POST /projects` - Create new project
+- `GET /projects/{id}` - Get project details
+- `PUT /projects/{id}` - Update project
+- `DELETE /projects/{id}` - Delete project
+
+### Plans (within Projects)
+- `GET /projects/{project_id}/plans` - List all plans in a project
+- `POST /projects/{project_id}/plans` - Create new plan in project
+- `GET /projects/{project_id}/plans/{plan_id}` - Get plan details
+- `PUT /projects/{project_id}/plans/{plan_id}` - Update plan
+- `DELETE /projects/{project_id}/plans/{plan_id}` - Delete plan
 - `POST /plans/generate-from-z` - Generate plans from Z
 
-### Tasks
+### Tasks (within Plans)
 - `POST /plans/{plan_id}/tasks` - Create task
 - `GET /plans/{plan_id}/tasks` - List tasks
 - `PUT /tasks/{id}` - Update task

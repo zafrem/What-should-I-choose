@@ -33,12 +33,12 @@ import {
   RadioButtonUnchecked as UncheckIcon,
   AutoAwesome as AutoAwesomeIcon,
 } from '@mui/icons-material';
-import { tasksAPI, plansAPI } from '../services/api';
+import { tasksAPI, plansAPI, projectsAPI } from '../services/api';
 import dayjs from 'dayjs';
 
-const AZPlanDetail = ({ plan, onPlanUpdate }) => {
-  const [sections, setSections] = useState([]);
-  const [expandedSections, setExpandedSections] = useState(['A']);
+const AZPlanDetail = ({ plan: project, onPlanUpdate }) => {
+  const [plans, setPlans] = useState([]);
+  const [expandedSections, setExpandedSections] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -71,36 +71,37 @@ const AZPlanDetail = ({ plan, onPlanUpdate }) => {
   const [deletingSection, setDeletingSection] = useState(null);
 
   useEffect(() => {
-    if (plan && plan.sections) {
-      loadSectionsWithTasks();
+    if (project && project.id) {
+      loadPlansWithTasks();
     }
-  }, [plan]);
+  }, [project]);
 
-  const loadSectionsWithTasks = async () => {
+  const loadPlansWithTasks = async () => {
     try {
       setLoading(true);
-      const sectionsWithTasks = [];
+      const plansResponse = await plansAPI.getAll(project.id);
+      const plansWithTasks = [];
       
-      for (const section of plan.sections) {
+      for (const plan of plansResponse.data) {
         try {
-          const tasksResponse = await tasksAPI.getAll(section.id);
-          sectionsWithTasks.push({
-            ...section,
+          const tasksResponse = await tasksAPI.getAll(plan.id);
+          plansWithTasks.push({
+            ...plan,
             tasks: tasksResponse.data
           });
         } catch (error) {
           // If no tasks found, just add empty tasks array
-          sectionsWithTasks.push({
-            ...section,
+          plansWithTasks.push({
+            ...plan,
             tasks: []
           });
         }
       }
       
-      setSections(sectionsWithTasks);
+      setPlans(plansWithTasks.sort((a, b) => a.plan_letter.localeCompare(b.plan_letter)));
       setError('');
     } catch (error) {
-      setError('Failed to load section details');
+      setError('Failed to load plans');
     } finally {
       setLoading(false);
     }
@@ -120,7 +121,7 @@ const AZPlanDetail = ({ plan, onPlanUpdate }) => {
     try {
       const taskData = {
         ...newTask,
-        order: sections.find(s => s.id === selectedSectionId)?.tasks?.length + 1 || 1,
+        order: plans.find(p => p.id === selectedSectionId)?.tasks?.length + 1 || 1,
       };
       
       await tasksAPI.create(selectedSectionId, taskData);
@@ -133,7 +134,7 @@ const AZPlanDetail = ({ plan, onPlanUpdate }) => {
         revenue: 0,
         support_target: '',
       });
-      loadSectionsWithTasks();
+      loadPlansWithTasks();
       onPlanUpdate();
     } catch (error) {
       setError('Failed to create task');
@@ -143,7 +144,7 @@ const AZPlanDetail = ({ plan, onPlanUpdate }) => {
   const handleToggleComplete = async (sectionId, task) => {
     try {
       await tasksAPI.update(task.id, { is_completed: !task.is_completed });
-      loadSectionsWithTasks();
+      loadPlansWithTasks();
       onPlanUpdate();
     } catch (error) {
       setError('Failed to update task status');
@@ -151,8 +152,8 @@ const AZPlanDetail = ({ plan, onPlanUpdate }) => {
   };
 
   const handleGenerateFromZ = async () => {
-    const sectionZ = sections.find(s => s.plan_letter === 'Z');
-    if (!sectionZ || !sectionZ.description) {
+    const planZ = plans.find(p => p.plan_letter === 'Z');
+    if (!planZ || !planZ.description) {
       setError('Plan Z must have content for AI generation');
       return;
     }
@@ -160,11 +161,11 @@ const AZPlanDetail = ({ plan, onPlanUpdate }) => {
     try {
       setLoading(true);
       await plansAPI.generateFromZ();
-      setSuccess('Sections B-Y generated from Plan Z successfully!');
-      loadSectionsWithTasks();
+      setSuccess('Plans B-Y generated from Plan Z successfully!');
+      loadPlansWithTasks();
       onPlanUpdate();
     } catch (error) {
-      setError(error.response?.data?.detail || 'Failed to generate sections');
+      setError(error.response?.data?.detail || 'Failed to generate plans');
     } finally {
       setLoading(false);
     }
@@ -193,7 +194,7 @@ const AZPlanDetail = ({ plan, onPlanUpdate }) => {
       setSuccess('Task deleted successfully');
       setDeleteTaskOpen(false);
       setDeletingTask(null);
-      loadSectionsWithTasks();
+      loadPlansWithTasks();
       onPlanUpdate();
     } catch (error) {
       setError('Failed to delete task');
@@ -217,7 +218,7 @@ const AZPlanDetail = ({ plan, onPlanUpdate }) => {
       setSuccess('Task updated successfully');
       setEditTaskOpen(false);
       setEditingTask(null);
-      loadSectionsWithTasks();
+      loadPlansWithTasks();
       onPlanUpdate();
     } catch (error) {
       setError('Failed to update task');
@@ -233,14 +234,14 @@ const AZPlanDetail = ({ plan, onPlanUpdate }) => {
     if (!deletingSection) return;
     
     try {
-      await plansAPI.delete(deletingSection.id);
-      setSuccess('Section deleted successfully');
+      await plansAPI.delete(project.id, deletingSection.id);
+      setSuccess('Plan deleted successfully');
       setDeleteSectionOpen(false);
       setDeletingSection(null);
-      loadSectionsWithTasks();
+      loadPlansWithTasks();
       onPlanUpdate();
     } catch (error) {
-      setError('Failed to delete section');
+      setError('Failed to delete plan');
     }
   };
 
@@ -251,33 +252,33 @@ const AZPlanDetail = ({ plan, onPlanUpdate }) => {
     }).format(amount);
   };
 
-  const getSectionProgress = (section) => {
-    if (!section.tasks || section.tasks.length === 0) return 0;
-    const completed = section.tasks.filter(task => task.is_completed).length;
-    return Math.round((completed / section.tasks.length) * 100);
+  const getPlanProgress = (plan) => {
+    if (!plan.tasks || plan.tasks.length === 0) return 0;
+    const completed = plan.tasks.filter(task => task.is_completed).length;
+    return Math.round((completed / plan.tasks.length) * 100);
   };
 
-  const sectionZ = sections.find(s => s.plan_letter === 'Z');
-  const hasValidSectionZ = sectionZ && sectionZ.description && sectionZ.description.trim().length > 0;
+  const planZ = plans.find(p => p.plan_letter === 'Z');
+  const hasValidPlanZ = planZ && planZ.description && planZ.description.trim().length > 0;
 
-  // Get missing sections B-Z
-  const getMissingSections = () => {
-    const allLetters = 'BCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-    const existingLetters = sections.map(s => s.plan_letter);
+  // Get missing plans A-Z
+  const getMissingPlans = () => {
+    const allLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    const existingLetters = plans.map(p => p.plan_letter);
     return allLetters.filter(letter => !existingLetters.includes(letter));
   };
 
-  const handleOpenSectionSelection = () => {
-    const missingLetters = getMissingSections();
+  const handleOpenPlanSelection = () => {
+    const missingLetters = getMissingPlans();
     if (missingLetters.length === 0) {
-      setSuccess('All sections B-Z already exist!');
+      setSuccess('All plans A-Z already exist!');
       return;
     }
     setSectionSelectionOpen(true);
     setSelectedSectionsToCreate([]);
   };
 
-  const handleToggleSectionSelection = (letter) => {
+  const handleTogglePlanSelection = (letter) => {
     setSelectedSectionsToCreate(prev => 
       prev.includes(letter)
         ? prev.filter(l => l !== letter)
@@ -285,34 +286,38 @@ const AZPlanDetail = ({ plan, onPlanUpdate }) => {
     );
   };
 
-  const handleCreateSelectedSections = async () => {
+  const handleCreateSelectedPlans = async () => {
     if (selectedSectionsToCreate.length === 0) {
-      setError('Please select at least one section to create');
+      setError('Please select at least one plan to create');
       return;
     }
 
     try {
       setLoading(true);
-      const createdSections = [];
+      const createdPlans = [];
       
       for (const letter of selectedSectionsToCreate) {
-        const sectionData = {
+        const planData = {
           plan_letter: letter,
           title: `Plan ${letter}`,
-          description: `Step ${letter} in your A-Z planning sequence.`,
+          description: letter === 'A' 
+            ? 'The most detailed and best form with low cost - your starting point' 
+            : letter === 'Z' 
+            ? 'Almost giving up option - your fallback plan' 
+            : `Step ${letter} in your A-Z planning sequence.`,
         };
         
-        const response = await plansAPI.create(sectionData);
-        createdSections.push(response.data);
+        const response = await plansAPI.create(project.id, planData);
+        createdPlans.push(response.data);
       }
 
-      setSuccess(`Created ${createdSections.length} section(s) successfully!`);
+      setSuccess(`Created ${createdPlans.length} plan(s) successfully!`);
       setSectionSelectionOpen(false);
       setSelectedSectionsToCreate([]);
-      loadSectionsWithTasks();
+      loadPlansWithTasks();
       onPlanUpdate();
     } catch (error) {
-      setError('Failed to create sections');
+      setError('Failed to create plans');
     } finally {
       setLoading(false);
     }
@@ -324,21 +329,21 @@ const AZPlanDetail = ({ plan, onPlanUpdate }) => {
       <Box sx={{ mb: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h4" gutterBottom>
-            {plan?.title || 'A-Z Plan'}
+            {project?.title || 'Project'}
           </Typography>
           
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
               startIcon={<AddIcon />}
-              onClick={handleOpenSectionSelection}
+              onClick={handleOpenPlanSelection}
               variant="outlined"
-              disabled={loading || getMissingSections().length === 0}
+              disabled={loading || getMissingPlans().length === 0}
               size="small"
             >
-              + Plan B-Z ({getMissingSections().length})
+              + Create Plans ({getMissingPlans().length})
             </Button>
             
-            {hasValidSectionZ && (
+            {hasValidPlanZ && (
               <Button
                 startIcon={<AutoAwesomeIcon />}
                 onClick={handleGenerateFromZ}
@@ -352,9 +357,9 @@ const AZPlanDetail = ({ plan, onPlanUpdate }) => {
           </Box>
         </Box>
         
-        {plan?.description && (
+        {project?.description && (
           <Typography variant="body1" color="text.secondary" paragraph>
-            {plan.description}
+            {project.description}
           </Typography>
         )}
       </Box>
@@ -362,9 +367,9 @@ const AZPlanDetail = ({ plan, onPlanUpdate }) => {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 
-      {/* A-Z Sections */}
+      {/* A-Z Plans */}
       <Box sx={{ flex: 1, overflow: 'auto' }}>
-        {sections.map((section) => (
+        {plans.map((section) => (
           <Accordion
             key={section.id}
             expanded={expandedSections.includes(section.id)}
@@ -386,8 +391,8 @@ const AZPlanDetail = ({ plan, onPlanUpdate }) => {
                   {section.title}
                 </Typography>
                 <Chip
-                  label={`${getSectionProgress(section)}%`}
-                  color={getSectionProgress(section) === 100 ? 'success' : 'default'}
+                  label={`${getPlanProgress(section)}%`}
+                  color={getPlanProgress(section) === 100 ? 'success' : 'default'}
                   size="small"
                 />
                 <Chip
@@ -687,7 +692,7 @@ const AZPlanDetail = ({ plan, onPlanUpdate }) => {
         <DialogTitle>Select Sections to Create</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" gutterBottom>
-            Choose which sections (B-Z) you want to add to your A-Z Plan:
+            Choose which plans (A-Z) you want to add to your project:
           </Typography>
           
           <Box sx={{ 
@@ -696,10 +701,10 @@ const AZPlanDetail = ({ plan, onPlanUpdate }) => {
             gap: 1, 
             mt: 2 
           }}>
-            {getMissingSections().map((letter) => (
+            {getMissingPlans().map((letter) => (
               <Box
                 key={letter}
-                onClick={() => handleToggleSectionSelection(letter)}
+                onClick={() => handleTogglePlanSelection(letter)}
                 sx={{
                   p: 2,
                   border: '2px solid',
@@ -744,21 +749,21 @@ const AZPlanDetail = ({ plan, onPlanUpdate }) => {
             </Box>
           )}
 
-          {getMissingSections().length === 0 && (
+          {getMissingPlans().length === 0 && (
             <Alert severity="info" sx={{ mt: 2 }}>
-              All sections B-Z already exist in your plan!
+              All plans A-Z already exist in your project!
             </Alert>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setSectionSelectionOpen(false)}>Cancel</Button>
           <Button 
-            onClick={handleCreateSelectedSections} 
+            onClick={handleCreateSelectedPlans} 
             variant="contained"
             disabled={selectedSectionsToCreate.length === 0 || loading}
             startIcon={loading ? <CircularProgress size={16} /> : <AddIcon />}
           >
-            Create {selectedSectionsToCreate.length > 0 ? `${selectedSectionsToCreate.length} ` : ''}Section{selectedSectionsToCreate.length !== 1 ? 's' : ''}
+            Create {selectedSectionsToCreate.length > 0 ? `${selectedSectionsToCreate.length} ` : ''}Plan{selectedSectionsToCreate.length !== 1 ? 's' : ''}
           </Button>
         </DialogActions>
       </Dialog>
